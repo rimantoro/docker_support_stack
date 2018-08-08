@@ -4,7 +4,7 @@ services:
   mysql_server:
     image: mariadb:10.1
     environment:
-      MYSQL_ROOT_PASSWORD: masukaja
+      MYSQL_ROOT_PASSWORD: yoursecret
     ports:
       - 3306:3306
     restart: always
@@ -32,12 +32,31 @@ services:
     hostname: "rabbitmq.local"
     environment:
       RABBITMQ_ERLANG_COOKIE: "X0DYOLVQWLISXX9G"
-      RABBITMQ_DEFAULT_USER: "rabbitmq"
-      RABBITMQ_DEFAULT_PASS: "rabbitmq"
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
       RABBITMQ_DEFAULT_VHOST: "/"
     ports:
       - 15672:15672
       - 5672:5672
+  postgres_server:
+    image: postgres:10.4
+    restart: always
+    environment:
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "yoursecret"
+    ports:
+      - 5432:5432
+  adminer:
+    image: adminer
+    restart: always
+    hostname: "adminer.local"
+    ports:
+      - 8090:8080
+  swagger_editor:
+    image: swaggerapi/swagger-editor
+    hostname: "swagger-editor.local"
+    ports:
+      - 8091:8080
 
 networks: 
   default:
