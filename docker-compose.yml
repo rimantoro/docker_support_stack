@@ -1,7 +1,6 @@
 version: '2'
 
 services:
-  
   # https://portainer.io/
   portainer:
     image: portainer/portainer
@@ -10,13 +9,13 @@ services:
     command: -H unix:///var/run/docker.sock --no-auth
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
+      - ./data/portainer:/data
     restart: always
-    
+
   mysql_server:
     image: mariadb:10.1
     environment:
-      MYSQL_ROOT_PASSWORD: yoursecret
+      MYSQL_ROOT_PASSWORD: yourpass
     ports:
       - 3306:3306
     restart: always
@@ -32,6 +31,8 @@ services:
   mongodb_server:
     image: mongo:3.6
     environment:
+      # - MONGO_INITDB_ROOT_USERNAME=root
+      # - MONGO_INITDB_ROOT_PASSWORD=yourpass
       - MONGO_DATA_DIR=/data/db
       - MONGO_LOG_DIR=/dev/null
     volumes:
@@ -39,31 +40,50 @@ services:
     ports:
       - 27017:27017
     command: ["mongod", "--master", "--smallfiles", "--logpath=/dev/null"]
+    restart: always
+  mongodb4_server:
+    image: mongo:4
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=yourpass
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/mongodb4:/data/db
+    ports:
+      - 27018:27017
+    command: ["mongod", "--smallfiles", "--logpath=/dev/null"]
   rabbitmq_server:
     image: rabbitmq:3.7.4-management
     hostname: "rabbitmq.local"
     environment:
-      RABBITMQ_ERLANG_COOKIE: "X0DYOLVQWLISXX9G"
+      RABBITMQ_ERLANG_COOKIE: "UPTOYOULAAAH"
       RABBITMQ_DEFAULT_USER: "guest"
       RABBITMQ_DEFAULT_PASS: "guest"
       RABBITMQ_DEFAULT_VHOST: "/"
     ports:
       - 15672:15672
       - 5672:5672
+    restart: always
   postgres_server:
     image: postgres:10.4
-    restart: always
     environment:
       POSTGRES_USER: "root"
-      POSTGRES_PASSWORD: "yoursecret"
+      POSTGRES_PASSWORD: "yourpasslaaah"
+      # POSTGRES_TZ: "GMT+7"
+      # POSTGRES_PGTZ: "GMT+7"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
     ports:
       - 5432:5432
+    restart: always
   adminer:
-    image: adminer
+    # image: adminer
+    image: dockette/adminer
     restart: always
     hostname: "adminer.local"
     ports:
-      - 8090:8080
+      - 8090:80
   swagger_editor:
     image: swaggerapi/swagger-editor
     hostname: "swagger-editor.local"
