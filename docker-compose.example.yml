@@ -1,0 +1,126 @@
+version: '2'
+
+services:
+  # https://portainer.io/
+  portainer:
+    image: portainer/portainer
+    ports:
+      - "9100:9000"
+    # command: -H unix:///var/run/docker.sock --no-auth
+    command: "-H unix:///var/run/docker.sock --admin-password-file 'data/password.txt'"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/portainer:/data
+    restart: always
+
+  mysql_server:
+    image: mariadb:10.1
+    environment:
+      MYSQL_ROOT_PASSWORD: yourpassword
+    ports:
+      - 3306:3306
+    restart: always
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+      - ./mysql:/etc/mysql/conf.d
+  redis_server:
+    image: redis:3.2.11
+    command: ["redis-server"]
+    restart: always
+    ports:
+      - 6379:6379
+  mongodb_server:
+    image: mongo:3.6
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=yourpassword
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - /data/db
+    ports:
+      - 27017:27017
+    command: ["mongod", "--master", "--smallfiles", "--logpath=/dev/null"]
+    restart: "no"
+  mongo4:
+    image: mongo:4
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=yourpassword
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./data/mongodb4:/data/db:cached
+    ports:
+      - 27018:27017
+    command: ["mongod", "--smallfiles", "--logpath=/dev/null"]
+  rabbitmq_server:
+    image: rabbitmq:3.7.4-management
+    hostname: "rabbitmq.local"
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "YOURRABBITMQCOOKIE"
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - 15672:15672
+      - 5672:5672
+    restart: always
+  postgres_server:
+    image: postgres:10.4
+    environment:
+      POSTGRES_USER: "root"
+      POSTGRES_PASSWORD: "yourpassword"
+      POSTGRES_TZ: "GMT+7"
+      POSTGRES_PGTZ: "GMT+7"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data:cached
+    ports:
+      - 5432:5432
+    restart: always
+  
+  swagger_editor:
+    image: swaggerapi/swagger-editor
+    hostname: "swagger-editor.local"
+    ports:
+      - 8091:8080
+
+  jenkinsci:
+    image: jenkinsci/blueocean
+    # user: root
+    ports:
+      - 8092:8080
+      - 50000:50000
+    volumes:
+      - ./data/jenkins:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+  
+  adminer:
+    image: dockette/adminer
+    restart: always
+    hostname: "adminer.local"
+    ports:
+      - 8090:80
+    networks: 
+    - api_gateway_kong-net
+
+  ## https://www.pgadmin.org/docs/pgadmin4/latest/container_deployment.html
+  pgadmin:
+    image: dpage/pgadmin4
+    hostname: "pgadmin.local"
+    ports:
+      - 8093:80
+    # volumes:
+    #   - ./data/pgadmin/varlib:/var/lib/pgadmin
+    #   - ./data/pgadmin/pgadmin4:/pgadmin4
+    environment:
+     - PGADMIN_DEFAULT_EMAIL=root
+     - PGADMIN_DEFAULT_PASSWORD=yourpassword
+     - PGADMIN_SERVER_JSON_FILE=/pgadmin4/servers.json
+
+networks: 
+  default:
+    external:
+      name: my-shared-network
+  api_gateway_kong-net: 
+    external: true
