@@ -29,36 +29,58 @@ services:
     restart: always
     ports:
       - 6379:6379
-  mongodb_server:
-    image: mongo:3.6
+  
+  #### MONGO 4 REPLICA SET
+  #### Container name need to be set in your /etc/hosts file
+
+  mongo4_01:
+    image: mongo:4
+    hostname: m4_01
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=yourpassword
       - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/dev/null
+      # - MONGO_LOG_DIR=/dev/null
     volumes:
-      - /data/db
+      - ./data/mongodb4:/data/db
     ports:
       - 27017:27017
-    command: ["mongod", "--master", "--smallfiles", "--logpath=/dev/null"]
+    command: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
     restart: "no"
-  mongo4:
+  
+  mongo4_02:
     image: mongo:4
+    hostname: m4_01
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=yourpassword
       - MONGO_DATA_DIR=/data/db
-      - MONGO_LOG_DIR=/dev/null
-    volumes:
-      - ./data/mongodb4:/data/db:cached
+      # - MONGO_LOG_DIR=/dev/null
     ports:
       - 27018:27017
-    command: ["mongod", "--smallfiles", "--logpath=/dev/null"]
+    command: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0" ]
+    restart: "no"
+
+  adminmongo:
+    image: mrvautin/adminmongo
+    environment:
+      - CONN_NAME=local_mongo
+      - HOST=0.0.0.0
+      - DB_HOST=mongo4_01
+      - DB_PORT=27017
+      - MONITORING=true
+      - LOCALE=en
+    ports:
+      - 1234:1234
+    restart: "no"
+
+  #### MONGO 4 REPLICA SET
+
   rabbitmq_server:
     image: rabbitmq:3.7.4-management
     hostname: "rabbitmq.local"
     environment:
-      RABBITMQ_ERLANG_COOKIE: "YOURRABBITMQCOOKIE"
+      RABBITMQ_ERLANG_COOKIE: "YOURRANDOMCHARHERE"
       RABBITMQ_DEFAULT_USER: "guest"
       RABBITMQ_DEFAULT_PASS: "guest"
       RABBITMQ_DEFAULT_VHOST: "/"
@@ -71,8 +93,8 @@ services:
     environment:
       POSTGRES_USER: "root"
       POSTGRES_PASSWORD: "yourpassword"
-      POSTGRES_TZ: "GMT+7"
-      POSTGRES_PGTZ: "GMT+7"
+      # POSTGRES_TZ: "GMT+7"
+      # POSTGRES_PGTZ: "GMT+7"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data:cached
     ports:
